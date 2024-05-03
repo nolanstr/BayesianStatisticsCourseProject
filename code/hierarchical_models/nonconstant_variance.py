@@ -50,3 +50,37 @@ class HierarchicalNCV:
                     init_models.append(key)
         if len(init_models) > 0:
             raise ValueError("Models Need Initialization: {init_models}")
+
+class BaseHierarchicalNCV:
+    """
+    Hierarchical Bayesian Model with Non-Constant Variance.
+    """
+
+    def __init__(self, models):
+        """
+            Models are passed in the order in which they will be sampled
+            from, i.e.
+            for s in range(S):
+                for n in range(len(models)):
+                    sample full conditional of model n
+
+        """
+        self.models = models 
+        self._check_models()
+    
+    
+    def run_gibbs_sampler(self, S=1000):
+
+        self.models[-1].sample_full_conditional()
+
+        for s in tqdm(range(S)):
+            for model in self.models:
+                model.sample_full_conditional()
+    
+    def _check_models(self):
+        init_models = []
+        for i in range(len(self.models)-1):
+            if self.models[i].samples.shape[0] == 0:
+                init_models.append(i+1)
+        if len(init_models) > 0:
+            raise ValueError("Models Need Initialization: {init_models}")

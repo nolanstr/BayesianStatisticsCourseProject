@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-from scipy.stats import lognorm
-
-
+from scipy.stats import norm, lognorm
 
 labels = [ r"$\alpha_{1}$", 
           r"$\alpha_{2}$", 
@@ -52,47 +50,3 @@ def visualize_lognormal_distributions(data, mu_samples, var_samples,
     plt.savefig("data_lognormal_dist", dpi=300)
     plt.show()
 
-def plot_prior_vs_posterior(model, label, tag, burnin=50, show=False):
-    filename = f"prior_vs_post/{tag}"
-    fig, ax = plt.subplots()
-    if "rho" in tag:
-        interval = model._distribution.interval(0.95)
-        X = np.linspace(interval[0], interval[1], 1000)
-        weights = model._distribution_df(X)
-        sns.kdeplot(x=X, weights=weights, ax=ax, label="Prior", fill=True,
-                    cut=0)
-        sns.kdeplot(x=1/model.samples[burnin:], 
-                    ax=ax, 
-                    label="Posterior", 
-                    fill=True,
-                    cut=0)
-    elif "alpha" in tag:
-        X = np.linspace(0, 20, 1000)
-        weights = model._distribution_df(X)
-        sns.kdeplot(x=X, weights=weights, ax=ax, label="Prior", fill=True,
-                    cut=0)
-        #sns.kdeplot(x=model.samples[burnin:], 
-        #            ax=ax, 
-        #            label="Posterior", 
-        #            fill=True,
-        #            cut=0)
-        ax.axvline(model.samples[-1], label="Posterior", color="orange")
-    else:
-        interval = model._distribution.interval(0.95)
-        X = np.linspace(interval[0], interval[1], 1000)
-        weights = model._distribution_df(X)
-        sns.kdeplot(x=X, weights=weights, ax=ax, label="Prior", fill=True,
-                    cut=0)
-        sns.kdeplot(x=model.samples[burnin:], 
-                    ax=ax, 
-                    label="Posterior", 
-                    fill=True,
-                    cut=0)
-    ax.legend()
-    ax.set_xlabel(label)
-    fig.suptitle(f"Posterior vs. Prior for {label}")
-    plt.savefig(filename, dpi=300)
-    if show:
-        plt.show()
-    plt.clf()
-    return

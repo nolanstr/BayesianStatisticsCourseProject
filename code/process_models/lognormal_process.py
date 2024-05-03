@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import norm, gamma
 
-from model import Model
+from process_models.model import Model
 
 class LogNormalNormalMean(Model):
     """
@@ -16,7 +16,7 @@ class LogNormalNormalMean(Model):
         if isinstance(init_current_state, bool):
             if not init_current_state:
                 self.samples = np.zeros(n_groups)
-        self._dependencies_keys = ["rho", "x"]
+        self._dependencies_keys = ["dep", "x"]
         m, p = self.get_priors()
         self._distribution = norm(loc=m, scale=np.sqrt(p))
         self._distribution_df = self._distribution.pdf
@@ -29,14 +29,13 @@ class LogNormalNormalMean(Model):
 
         for i, (rho_i, x_i) in enumerate(zip(rho, x)):
             n, x_bar = self.get_sufficient_statistics(x_i)
-            p_prime = p + (n * rho_i)
+            p_prime = (p + (n * rho_i))
             m_prime = ((m * p) + (n * rho_i * x_bar)) / (p_prime)
             sample[i] = norm(loc=m_prime, scale=np.sqrt(1 / p_prime)).rvs()
-
         self.samples = np.vstack((self.samples, sample))
 
     def get_dependencies(self):
-        rho = self.dependencies["rho"].current_state
+        rho = self.dependencies["dep"].current_state
         x = self.dependencies["x"]
         return rho, x
 
@@ -87,7 +86,7 @@ class LogNormalGammaPrecision(Model):
         if isinstance(init_current_state, bool):
             if not init_current_state:
                 self.samples = np.zeros((0,n_groups))
-        self._dependencies_keys = ["mu", "x"]
+        self._dependencies_keys = ["dep", "x"]
         alpha, beta = self.get_priors()
         self._distribution = gamma(a=alpha, scale=1/beta)
         self._distribution_df = self._distribution.pdf
@@ -98,7 +97,6 @@ class LogNormalGammaPrecision(Model):
         mu, x = self.get_dependencies()
         alpha, beta = self.get_priors()
         sample = np.empty(self._n_groups)
-
         for i, (mu_i, x_i) in enumerate(zip(mu, x)):
             n, SS = self.get_sufficient_statistics(x_i, mu_i)
             alpha_prime = alpha + (n / 2)
@@ -108,7 +106,7 @@ class LogNormalGammaPrecision(Model):
         self.samples = np.vstack((self.samples, sample))
 
     def get_dependencies(self):
-        mu = self.dependencies["mu"].current_state
+        mu = self.dependencies["dep"].current_state
         x = self.dependencies["x"]
         return mu, x
 
